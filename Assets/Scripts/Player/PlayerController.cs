@@ -6,11 +6,11 @@ using UnityEngine.Tilemaps;
 public class PlayerController : MonoBehaviour
 {
     //Detect Game Components
-    private Rigidbody2D rb;
+    public Rigidbody2D rb;
     public SpriteRenderer glasses;
     private GameManager gameManager;
     public HealthBar healthBar;
-    private HealOverTime HPS;
+    private Heal HPS;
     public float maxVelocity;
     private Ray ray;
 
@@ -19,8 +19,7 @@ public class PlayerController : MonoBehaviour
     public float powerupDuration = 5;
 
     //Powerup bools
-    private bool hasDJPowerup;
-    private bool canJump;
+    public bool canJump;
     private Coroutine currentCoroutine = null;
 
     private bool hasKBPowerup;
@@ -36,7 +35,7 @@ public class PlayerController : MonoBehaviour
     void Start()
     {
         //Debug
-        HPS = GetComponent<HealOverTime>();
+        HPS = GetComponent<Heal>();
         currentHealth = maxHealth;
         healthBar.SetMaxHealth(maxHealth);
         rb = gameObject.GetComponent<Rigidbody2D>();
@@ -45,36 +44,15 @@ public class PlayerController : MonoBehaviour
 
     void Update()
     {
-        ray = new Ray(transform.position, transform.forward);
-        RaycastHit2D hit = Physics2D.Raycast(transform.position, transform.forward,200,1<<10);
-        var boundaryObject = hit.collider?.gameObject;
-
-
-        var tilemap = boundaryObject?.GetComponent<Tilemap>();
-
-
-        if (tilemap != null)
-        {
-            var tilePos = new Vector3Int((int)hit.point.x, (int)hit.point.y, 0);
-            Debug.Log(tilemap?.GetTile(tilePos));
-
-        }
-
-        //Ray ray = Camera.main.ScreenPointToRay(Input.GetTouch(i).position);
-        //if (Physics.Raycast(ray, out hit))
-        //{
-        //    if (hit.collider != null)
-        //    {
-        //        RaycastReturn = hit.collider.gameObject.name;
-        //        FoundObject = GameObject.Find(RaycastReturn);
-        //        Destroy(FoundObject);
-        //        Debug.Log("did hit");
-        //    }
-        //}
-        //Debug.DrawRay(transform.position+Vector3.forward, transform.forward, Color.green, 2, false);
+        //Limit velocity
         if (rb.velocity.magnitude > maxVelocity)
         {
             rb.velocity = rb.velocity.normalized * maxVelocity;
+        }
+
+        if (Input.GetKeyDown(KeyCode.I))
+        {
+            TakeDamage(15);
         }
 
         //Set the healthbar to the current health
@@ -94,7 +72,7 @@ public class PlayerController : MonoBehaviour
             gameManager.GameOver();
         }
 
-        //Left-Right Movement
+        //Left-Right, duck
         if (Input.GetKey(KeyCode.A))
         {
             rb.AddForce(transform.right * thrust * Time.deltaTime);
@@ -110,18 +88,10 @@ public class PlayerController : MonoBehaviour
             rb.AddForce(-transform.up * thrust * Time.deltaTime);
         }
 
-        //Double-Jump Mechanic
-        if (Input.GetKeyDown(KeyCode.Space) && hasDJPowerup && canJump)
-        {
-            canJump = false;
-            rb.AddForce(Vector3.up * bounciness * Time.deltaTime, ForceMode2D.Impulse);
-        }
-
         //Speed Powerup
         if (hasSPowerup)
         {
             hasKBPowerup = false;
-            hasDJPowerup = false;
             thrust = 10000;
         }
         else
@@ -132,33 +102,31 @@ public class PlayerController : MonoBehaviour
 
     void OnTriggerEnter2D(Collider2D other)
     {
-
-        if (other.CompareTag("DoubleJumpPowerup"))
+        if (other.CompareTag("DoubleJumpPowerup") && other.gameObject.GetComponent<SpriteRenderer>().enabled == true)
         {
-            glasses.color = new Color(87.0f / 255.0f, 207.0f / 255.0f, 144.0f / 255.0f);
-            hasDJPowerup = true;
-            hasKBPowerup = false;
-            hasSPowerup = false;
-            other.gameObject.SetActive(false);
-
-            if (currentCoroutine != null)
+            if (!gameObject.GetComponent<DoubleJump>())
             {
-                StopCoroutine(currentCoroutine);
+                DoubleJump dJ = gameObject.AddComponent(typeof(DoubleJump)) as DoubleJump;
             }
-            currentCoroutine = StartCoroutine(PowerupCountdownRoutine());
+            other.gameObject.GetComponent<SpriteRenderer>().enabled = false;
         }
-
-        if (other.CompareTag("Death"))
+        
+        if (other.CompareTag("HealPowerup") && other.gameObject.GetComponent<SpriteRenderer>().enabled == true)
         {
-            Destroy(gameObject);
-            gameManager.GameOver();
+            if (!gameObject.GetComponent<Heal>() && currentHealth != maxHealth)
+            {
+                Heal hP = gameObject.AddComponent(typeof(Heal)) as Heal;
+            }
+            if (currentHealth != maxHealth)
+            {
+                other.gameObject.GetComponent<SpriteRenderer>().enabled = false;
+            }
         }
-
+        
         if (other.CompareTag("KnockbackPowerup"))
         {
             glasses.color = new Color(214.0f / 255.0f, 55.0f / 255.0f, 55.0f / 255.0f);
             hasKBPowerup = true;
-            hasDJPowerup = false;
             hasSPowerup = false;
             other.gameObject.SetActive(false);
             if (currentCoroutine != null)
@@ -172,7 +140,6 @@ public class PlayerController : MonoBehaviour
         {
             glasses.color = new Color(1.0f, 244.0f / 255.0f, 0.0f);
             hasKBPowerup = false;
-            hasDJPowerup = false;
             hasSPowerup = true;
             other.gameObject.SetActive(false);
             if (currentCoroutine != null)
@@ -181,14 +148,12 @@ public class PlayerController : MonoBehaviour
             }
             currentCoroutine = StartCoroutine(PowerupCountdownRoutine());
         }
-
-        if (other.CompareTag("HealPowerup"))
+        
+        //Die when going out of screen
+        if (other.CompareTag("Death"))
         {
-            if (currentHealth != maxHealth)
-            {
-                StartCoroutine(HPS.Hps());
-            }
-            other.gameObject.SetActive(false);
+            Destroy(gameObject);
+            gameManager.GameOver();
         }
     }
 
@@ -276,7 +241,6 @@ public class PlayerController : MonoBehaviour
         while (true)
         {
             yield return new WaitForSeconds(powerupDuration);
-            hasDJPowerup = false;
             hasKBPowerup = false;
             hasSPowerup = false;
             glasses.color = new Color(90.0f / 255.0f, 253.0f / 255.0f, 255.0f / 255.0f);

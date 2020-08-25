@@ -10,6 +10,11 @@ public class PowerupManager : MonoBehaviour
     public GameObject heal;
     private GameManager gameManager;
 
+    private Coroutine DJcr = null;
+    private Coroutine KBcr = null;
+    private Coroutine Scr = null;
+    private Coroutine Hcr = null;
+
     void Start() 
     {
         gameManager = GameObject.Find("GameManager").GetComponent<GameManager>();
@@ -36,31 +41,48 @@ public class PowerupManager : MonoBehaviour
     
     void Update()
     {
-        if (doubleJump != null && doubleJump.activeSelf == false)
+        if (doubleJump != null && doubleJump.GetComponent<SpriteRenderer>().enabled == false)
         {
-            StartCoroutine(DoubleJumpRespawn(8));
+            if (DJcr != null)
+            {
+                StopCoroutine(DJcr);
+            }
+            StartCoroutine(DoubleJumpRespawn(2));
         }
-        if (knockBack != null && knockBack.activeSelf == false)
+        if (knockBack != null && knockBack.GetComponent<SpriteRenderer>().enabled == false)
         {
+            if (KBcr != null)
+            {
+                StopCoroutine(KBcr);
+            }
             StartCoroutine(KnockBackRespawn(30));
         }
-        if (speed != null && speed.activeSelf == false)
+        if (speed != null && speed.GetComponent<SpriteRenderer>().enabled == false)
         {
+            if (Scr != null)
+            {
+                StopCoroutine(Scr);
+            }
             StartCoroutine(SpeedRespawn(15));
         }
-        if (heal != null && heal.activeSelf == false )
+        if (heal != null && heal.GetComponent<SpriteRenderer>().enabled == false )
         {
+            if (Hcr != null)
+            {
+                StopCoroutine(Hcr);
+            }
             StartCoroutine(HealRespawn(10));
         }
     }
     
     IEnumerator DoubleJumpRespawn(int duration)
     {
+        SpriteRenderer spriteD = doubleJump.GetComponent<SpriteRenderer>();
         yield return new WaitForSeconds(duration);
         
         if (gameManager.isGameActive)
         {
-            doubleJump.SetActive(true);
+            spriteD.enabled = true;
         }
     }
     IEnumerator KnockBackRespawn(int duration)
@@ -69,7 +91,7 @@ public class PowerupManager : MonoBehaviour
         
         if (gameManager.isGameActive)
         {
-            knockBack.SetActive(true);
+            knockBack.GetComponent<SpriteRenderer>().enabled = true;
         }
     }
     IEnumerator SpeedRespawn(int duration)
@@ -78,7 +100,7 @@ public class PowerupManager : MonoBehaviour
         
         if (gameManager.isGameActive)
         {
-            speed.SetActive(true);
+            speed.GetComponent<SpriteRenderer>().enabled = true;
         }
     }
     IEnumerator HealRespawn(int duration)
@@ -87,7 +109,7 @@ public class PowerupManager : MonoBehaviour
         
         if (gameManager.isGameActive)
         {
-            heal.SetActive(true);
+            heal.GetComponent<SpriteRenderer>().enabled = true;
         }
     }
 }
