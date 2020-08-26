@@ -11,8 +11,8 @@ TagManager:
   - Enemy
   - SpeedPowerup
   - Death
-  - SpawnPoint
   - HealPowerup
+  - BouncePowerup
   layers:
   - Default
   - TransparentFX

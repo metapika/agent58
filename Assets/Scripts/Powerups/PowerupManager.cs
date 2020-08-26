@@ -8,12 +8,14 @@ public class PowerupManager : MonoBehaviour
     public GameObject knockBack;
     public GameObject speed;
     public GameObject heal;
+    public GameObject bounce;
     private GameManager gameManager;
 
     private Coroutine DJcr = null;
     private Coroutine KBcr = null;
     private Coroutine Scr = null;
     private Coroutine Hcr = null;
+    private Coroutine Bcr = null;
 
     void Start() 
     {
@@ -37,6 +39,10 @@ public class PowerupManager : MonoBehaviour
         {
             heal = GameObject.Find("HealPowerup");
         } else {heal = null;}
+        if(GameObject.Find("BouncePowerup"))
+        {
+            bounce = GameObject.Find("BouncePowerup");
+        } else {bounce = null;}
     }
     
     void Update()
@@ -55,7 +61,7 @@ public class PowerupManager : MonoBehaviour
             {
                 StopCoroutine(KBcr);
             }
-            StartCoroutine(KnockBackRespawn(30));
+            StartCoroutine(KnockBackRespawn(2));
         }
         if (speed != null && speed.GetComponent<SpriteRenderer>().enabled == false)
         {
@@ -65,13 +71,21 @@ public class PowerupManager : MonoBehaviour
             }
             StartCoroutine(SpeedRespawn(15));
         }
-        if (heal != null && heal.GetComponent<SpriteRenderer>().enabled == false )
+        if (heal != null && heal.GetComponent<SpriteRenderer>().enabled == false)
         {
             if (Hcr != null)
             {
                 StopCoroutine(Hcr);
             }
             StartCoroutine(HealRespawn(10));
+        }
+        if (bounce != null && bounce.GetComponent<SpriteRenderer>().enabled == false)
+        {
+            if (Bcr != null)
+            {
+                StopCoroutine(Bcr);
+            }
+            StartCoroutine(BounceUpRespawn(2));
         }
     }
     
@@ -110,6 +124,15 @@ public class PowerupManager : MonoBehaviour
         if (gameManager.isGameActive)
         {
             heal.GetComponent<SpriteRenderer>().enabled = true;
+        }
+    }
+    IEnumerator BounceUpRespawn(int duration)
+    {
+        yield return new WaitForSeconds(duration);
+        
+        if (gameManager.isGameActive)
+        {
+            bounce.GetComponent<SpriteRenderer>().enabled = true;
         }
     }
 }

@@ -9,7 +9,7 @@ public class EnemySpawning : MonoBehaviour
     public GameObject enemyPrefab;
     public int enemyCount;
     public int waveNumber = 1;
-    public GameObject[] spawnPoints;
+    public Transform[] spawnPoints;
     public TextMeshProUGUI waveText;
 
     void Start()
@@ -33,9 +33,9 @@ public class EnemySpawning : MonoBehaviour
     private Vector2 GenerateSpawnPoint()
     {
         int prefabIndex = Random.Range(0,4);
-        GameObject pos;
+        Transform pos;
 
-        pos = Instantiate(spawnPoints[prefabIndex]);
+        pos = spawnPoints[prefabIndex];
         
         return pos.transform.position;
     }

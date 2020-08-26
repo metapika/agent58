@@ -14,21 +14,12 @@ public class PlayerController : MonoBehaviour
     public float maxVelocity;
     private Ray ray;
 
-    private float thrust;
-    public float bounciness;
+    public float thrust;
+    public float bounciness = 1000;
     public float powerupDuration = 5;
-
-    //Powerup bools
     public bool canJump;
-    private Coroutine currentCoroutine = null;
-
-    private bool hasKBPowerup;
-    private bool canKnockBack;
-
-    private bool hasSPowerup;
 
     //Health system
-
     public int maxHealth = 20;
     public int currentHealth;
 
@@ -87,68 +78,55 @@ public class PlayerController : MonoBehaviour
         {
             rb.AddForce(-transform.up * thrust * Time.deltaTime);
         }
-
-        //Speed Powerup
-        if (hasSPowerup)
-        {
-            hasKBPowerup = false;
-            thrust = 10000;
-        }
-        else
-        {
-            thrust = 6000;
-        }
     }
 
     void OnTriggerEnter2D(Collider2D other)
     {
+        //DoubleJump Effects
         if (other.CompareTag("DoubleJumpPowerup") && other.gameObject.GetComponent<SpriteRenderer>().enabled == true)
         {
-            if (!gameObject.GetComponent<DoubleJump>())
+            if(!GetComponent<DoubleJump>())
             {
-                DoubleJump dJ = gameObject.AddComponent(typeof(DoubleJump)) as DoubleJump;
-            }
-            other.gameObject.GetComponent<SpriteRenderer>().enabled = false;
-        }
-        
-        if (other.CompareTag("HealPowerup") && other.gameObject.GetComponent<SpriteRenderer>().enabled == true)
-        {
-            if (!gameObject.GetComponent<Heal>() && currentHealth != maxHealth)
-            {
-                Heal hP = gameObject.AddComponent(typeof(Heal)) as Heal;
-            }
-            if (currentHealth != maxHealth)
-            {
+                gameObject.AddComponent(typeof(DoubleJump));
                 other.gameObject.GetComponent<SpriteRenderer>().enabled = false;
             }
         }
-        
-        if (other.CompareTag("KnockbackPowerup"))
+        //Healing Effects
+        if (other.CompareTag("HealPowerup") && other.gameObject.GetComponent<SpriteRenderer>().enabled == true)
         {
-            glasses.color = new Color(214.0f / 255.0f, 55.0f / 255.0f, 55.0f / 255.0f);
-            hasKBPowerup = true;
-            hasSPowerup = false;
-            other.gameObject.SetActive(false);
-            if (currentCoroutine != null)
+            if(!GetComponent<Heal>() && currentHealth != maxHealth)
             {
-                StopCoroutine(currentCoroutine);
+                gameObject.AddComponent(typeof(Heal));
+                other.gameObject.GetComponent<SpriteRenderer>().enabled = false;
             }
-            currentCoroutine = StartCoroutine(PowerupCountdownRoutine());
         }
-
-        if (other.CompareTag("SpeedPowerup"))
+        //Knockback Effects
+        if (other.CompareTag("KnockbackPowerup") && other.gameObject.GetComponent<SpriteRenderer>().enabled == true)
         {
-            glasses.color = new Color(1.0f, 244.0f / 255.0f, 0.0f);
-            hasKBPowerup = false;
-            hasSPowerup = true;
-            other.gameObject.SetActive(false);
-            if (currentCoroutine != null)
+            if(!GetComponent<KnockBack>())
             {
-                StopCoroutine(currentCoroutine);
+                gameObject.AddComponent(typeof(KnockBack));
+                other.gameObject.GetComponent<SpriteRenderer>().enabled = false;
             }
-            currentCoroutine = StartCoroutine(PowerupCountdownRoutine());
         }
-        
+        //Speedup Effects
+        if (other.CompareTag("SpeedPowerup") && other.gameObject.GetComponent<SpriteRenderer>().enabled == true)
+        {
+            if(!GetComponent<SpeedUp>())
+            {
+                gameObject.AddComponent(typeof(SpeedUp));
+                other.gameObject.GetComponent<SpriteRenderer>().enabled = false;
+            }
+        }
+        //Bounce Effects
+        if(other.CompareTag("BouncePowerup") && other.gameObject.GetComponent<SpriteRenderer>().enabled == true)
+        {
+            if(!GetComponent<BounceUp>())
+            {
+                gameObject.AddComponent(typeof(BounceUp));
+                other.gameObject.GetComponent<SpriteRenderer>().enabled = false;
+            }
+        }
         //Die when going out of screen
         if (other.CompareTag("Death"))
         {
@@ -164,13 +142,14 @@ public class PlayerController : MonoBehaviour
         Vector3 playerPosition = transform.position;
         bool leftSide;
 
+        //Damage from enemies
         if (collision.gameObject.GetComponent<EnemyRotate>())
         {
-            TakeDamage(5);
+            //TakeDamage(5);
         }
 
         //Bouncing from ground
-        if (collision.gameObject.CompareTag("BouncyGround")) // && rb.velocity.y <= 0
+        if (collision.gameObject.CompareTag("BouncyGround"))
         {
             canJump = true;
             rb.AddForce(transform.up * bounciness * Time.deltaTime, ForceMode2D.Impulse);
@@ -197,22 +176,8 @@ public class PlayerController : MonoBehaviour
 
             rb.AddForce(transform.up * bounciness * Time.deltaTime, ForceMode2D.Impulse);
             rb.AddForce(transform.right * bounciness * Time.deltaTime, ForceMode2D.Impulse);
-            //Damage from enemies
-            if (collision.gameObject.CompareTag("BouncyGround"))
-            {
-                TakeDamage(5);
-            }
         }
-
-        //Knockback enemies
-        if (collision.gameObject.CompareTag("Enemy") && hasKBPowerup)
-        {
-            Rigidbody2D enemyRigidbody = collision.gameObject.GetComponent<Rigidbody2D>();
-            Vector3 awayFromPlayer = (collision.gameObject.transform.position - transform.position);
-
-            enemyRigidbody.AddForce(awayFromPlayer * 1000.0f * Time.deltaTime, ForceMode2D.Impulse);
-        }
-        //Anti Softlock
+        //Anti Softlock                         NEEDS FIX !!!!!!
         if (collision.gameObject.CompareTag("Enemy"))
         {
             Rigidbody2D enemyRigidbody = collision.gameObject.GetComponent<Rigidbody2D>();
@@ -234,16 +199,5 @@ public class PlayerController : MonoBehaviour
         currentHealth += amount;
 
         healthBar.SetHealth(currentHealth);
-    }
-
-    IEnumerator PowerupCountdownRoutine()
-    {
-        while (true)
-        {
-            yield return new WaitForSeconds(powerupDuration);
-            hasKBPowerup = false;
-            hasSPowerup = false;
-            glasses.color = new Color(90.0f / 255.0f, 253.0f / 255.0f, 255.0f / 255.0f);
-        }
     }
 }
