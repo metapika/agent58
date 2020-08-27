@@ -19,7 +19,7 @@ public class DoubleJump : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.Space) && player.canJump)
         {
             player.canJump = false;
-            player.rb.AddForce(Vector3.up * player.bounciness * Time.deltaTime, ForceMode2D.Impulse);
+            player.rb.AddForce(Vector3.up * player.bounciness * 2 * Time.deltaTime, ForceMode2D.Impulse);
         }
     }
 

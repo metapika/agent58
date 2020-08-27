@@ -17,11 +17,15 @@ public class PlayerController : MonoBehaviour
     public float thrust;
     public float bounciness = 1000;
     public float powerupDuration = 5;
-    public bool canJump;
+    public bool canJump, canGrab;
 
     //Health system
     public int maxHealth = 20;
     public int currentHealth;
+
+    //Walljumping
+    public Transform wallBouncePoint;
+    public LayerMask whatisGround;
 
     void Start()
     {
@@ -66,17 +70,37 @@ public class PlayerController : MonoBehaviour
         //Left-Right, duck
         if (Input.GetKey(KeyCode.A))
         {
-            rb.AddForce(transform.right * thrust * Time.deltaTime);
-            transform.eulerAngles = Vector3.up * 180;
+            rb.AddForce(-transform.right * thrust * Time.deltaTime);
+            transform.localScale = new Vector3(-2.5f, 2.5f, 2.5f);
         }
         if (Input.GetKey(KeyCode.D))
         {
             rb.AddForce(transform.right * thrust * Time.deltaTime);
-            transform.eulerAngles = Vector3.up;
+            transform.localScale = new Vector3(2.5f, 2.5f, 2.5f);
         }
         if (Input.GetKey(KeyCode.S))
         {
             rb.AddForce(-transform.up * thrust * Time.deltaTime);
+        }
+
+        //Walljumping
+
+        canGrab = Physics2D.OverlapCircle(wallBouncePoint.position, .2f, whatisGround);
+
+        if(canGrab)
+        {
+            if(transform.localScale.x == 2.5f)
+            {
+                transform.localScale = new Vector3(-2.5f, 2.5f, 2.5f);
+                rb.AddForce(transform.up * bounciness/2 * Time.deltaTime, ForceMode2D.Impulse);
+                rb.AddForce(-transform.right * bounciness/2 * Time.deltaTime, ForceMode2D.Impulse);
+            }
+            else if (transform.localScale.x == -2.5f)
+            {
+                transform.localScale = new Vector3(2.5f, 2.5f, 2.5f);
+                rb.AddForce(transform.up * bounciness/2 * Time.deltaTime, ForceMode2D.Impulse);
+                rb.AddForce(transform.right * bounciness/2 * Time.deltaTime, ForceMode2D.Impulse);
+            }
         }
     }
 
@@ -167,15 +191,18 @@ public class PlayerController : MonoBehaviour
             //Bounce in the opposite way of the wall
             if (leftSide)
             {
-                transform.eulerAngles = Vector3.up * 180;
+                transform.localScale = new Vector3(-2.5f, 2.5f, 2.5f);
+                rb.AddForce(transform.up * bounciness * Time.deltaTime, ForceMode2D.Impulse);
+                rb.AddForce(-transform.right * bounciness * Time.deltaTime, ForceMode2D.Impulse);
             }
             else
             {
-                transform.eulerAngles = Vector3.up;
+                transform.localScale = new Vector3(2.5f, 2.5f, 2.5f);
+                rb.AddForce(transform.up * bounciness * Time.deltaTime, ForceMode2D.Impulse);
+                rb.AddForce(transform.right * bounciness * Time.deltaTime, ForceMode2D.Impulse);
             }
 
-            rb.AddForce(transform.up * bounciness * Time.deltaTime, ForceMode2D.Impulse);
-            rb.AddForce(transform.right * bounciness * Time.deltaTime, ForceMode2D.Impulse);
+            
         }
         //Anti Softlock                         NEEDS FIX !!!!!!
         if (collision.gameObject.CompareTag("Enemy"))
