@@ -16,10 +16,10 @@ public class DoubleJump : MonoBehaviour
     void Update()
     {
         //Double-Jump
-        if (Input.GetKeyDown(KeyCode.Space) && player.canJump)
+        if (Input.GetKeyDown(KeyCode.Space) && player.canDJump && !player.isGrounded)
         {
-            player.canJump = false;
-            player.rb.AddForce(Vector3.up * player.bounciness * 2 * Time.deltaTime, ForceMode2D.Impulse);
+            player.canDJump = false;
+            player.rb.velocity = new Vector2(player.rb.velocity.x, player.jumpForce);
         }
     }
 

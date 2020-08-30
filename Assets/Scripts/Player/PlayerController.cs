@@ -5,31 +5,30 @@ using UnityEngine.Tilemaps;
 
 public class PlayerController : MonoBehaviour
 {
-    //Detect Game Components
+    //Public
     public Rigidbody2D rb;
     public SpriteRenderer glasses;
+    //Private
     private GameManager gameManager;
-    public HealthBar healthBar;
+    private HealthBar healthBar;
     private Heal HPS;
-    public float maxVelocity;
-    private Ray ray;
-
-    public float thrust;
-    public float bounciness = 1000;
-    public float powerupDuration = 5;
-    public bool canJump, canGrab;
-
     //Health system
-    public int maxHealth = 20;
+    private int maxHealth = 20;
     public int currentHealth;
-
-    //Walljumping
+    //Movement
+    public bool canDJump = true;
+    private bool canGrab;
+    public float moveSpeed, jumpForce;
+    public float bounciness = 1000;
     public Transform wallBouncePoint;
+    public Transform groundCheckPoint;
     public LayerMask whatisGround;
+    public bool isGrounded;
 
     void Start()
     {
         //Debug
+        healthBar = GameObject.Find("HealthBar").GetComponent<HealthBar>();
         HPS = GetComponent<Heal>();
         currentHealth = maxHealth;
         healthBar.SetMaxHealth(maxHealth);
@@ -39,16 +38,12 @@ public class PlayerController : MonoBehaviour
 
     void Update()
     {
+        //float maxVelocity = 70;
         //Limit velocity
-        if (rb.velocity.magnitude > maxVelocity)
-        {
-            rb.velocity = rb.velocity.normalized * maxVelocity;
-        }
-
-        if (Input.GetKeyDown(KeyCode.I))
-        {
-            TakeDamage(15);
-        }
+        //if (rb.velocity.magnitude > maxVelocity)
+        //{
+           // rb.velocity = rb.velocity.normalized * maxVelocity;
+        //}
 
         //Set the healthbar to the current health
         if (healthBar.healthint != currentHealth)
@@ -67,37 +62,46 @@ public class PlayerController : MonoBehaviour
             gameManager.GameOver();
         }
 
-        //Left-Right, duck
-        if (Input.GetKey(KeyCode.A))
+        //Left-Right movement
+        rb.velocity = new Vector2(Input.GetAxisRaw("Horizontal") * moveSpeed, rb.velocity.y);
+
+        //Check if grounded
+        isGrounded = Physics2D.OverlapCircle(groundCheckPoint.position, .2f, whatisGround);
+        
+        //Jumping
+        if (Input.GetButtonDown("Jump") && isGrounded)
         {
-            rb.AddForce(-transform.right * thrust * Time.deltaTime);
-            transform.localScale = new Vector3(-2.5f, 2.5f, 2.5f);
+            rb.velocity = new Vector2(rb.velocity.x, jumpForce);
         }
-        if (Input.GetKey(KeyCode.D))
+        //Enable doubleJumping
+        if(isGrounded)
         {
-            rb.AddForce(transform.right * thrust * Time.deltaTime);
-            transform.localScale = new Vector3(2.5f, 2.5f, 2.5f);
+            canDJump = true;
         }
-        if (Input.GetKey(KeyCode.S))
+        //flip direction
+        if (rb.velocity.x > 0)
         {
-            rb.AddForce(-transform.up * thrust * Time.deltaTime);
+            transform.localScale = Vector3.one;
+        }
+        else if (rb.velocity.x < 0)
+        {
+            transform.localScale = new Vector3(-1f, 1, 1f);
         }
 
         //Walljumping
-
         canGrab = Physics2D.OverlapCircle(wallBouncePoint.position, .2f, whatisGround);
 
         if(canGrab)
         {
-            if(transform.localScale.x == 2.5f)
+            if(transform.localScale.x == 1.5f)
             {
-                transform.localScale = new Vector3(-2.5f, 2.5f, 2.5f);
+                transform.localScale = new Vector3(-1.5f, 1.5f, 1.5f);
                 rb.AddForce(transform.up * bounciness/2 * Time.deltaTime, ForceMode2D.Impulse);
                 rb.AddForce(-transform.right * bounciness/2 * Time.deltaTime, ForceMode2D.Impulse);
             }
-            else if (transform.localScale.x == -2.5f)
+            else if (transform.localScale.x == -1.5f)
             {
-                transform.localScale = new Vector3(2.5f, 2.5f, 2.5f);
+                transform.localScale = new Vector3(1.5f, 1.5f, 1.5f);
                 rb.AddForce(transform.up * bounciness/2 * Time.deltaTime, ForceMode2D.Impulse);
                 rb.AddForce(transform.right * bounciness/2 * Time.deltaTime, ForceMode2D.Impulse);
             }
@@ -162,9 +166,7 @@ public class PlayerController : MonoBehaviour
     void OnCollisionEnter2D(Collision2D collision)
     {
         //Parameters
-        Vector3 wallPosition;
         Vector3 playerPosition = transform.position;
-        bool leftSide;
 
         //Damage from enemies
         if (collision.gameObject.GetComponent<EnemyRotate>())
@@ -172,38 +174,6 @@ public class PlayerController : MonoBehaviour
             //TakeDamage(5);
         }
 
-        //Bouncing from ground
-        if (collision.gameObject.CompareTag("BouncyGround"))
-        {
-            canJump = true;
-            rb.AddForce(transform.up * bounciness * Time.deltaTime, ForceMode2D.Impulse);
-        }
-
-        //Bouncing from walls
-        if (collision.gameObject.CompareTag("Wall"))
-        {
-            wallPosition = collision.transform.gameObject.transform.position;
-
-            //Define which side of the wall
-
-            leftSide = wallPosition.x > playerPosition.x;
-
-            //Bounce in the opposite way of the wall
-            if (leftSide)
-            {
-                transform.localScale = new Vector3(-2.5f, 2.5f, 2.5f);
-                rb.AddForce(transform.up * bounciness * Time.deltaTime, ForceMode2D.Impulse);
-                rb.AddForce(-transform.right * bounciness * Time.deltaTime, ForceMode2D.Impulse);
-            }
-            else
-            {
-                transform.localScale = new Vector3(2.5f, 2.5f, 2.5f);
-                rb.AddForce(transform.up * bounciness * Time.deltaTime, ForceMode2D.Impulse);
-                rb.AddForce(transform.right * bounciness * Time.deltaTime, ForceMode2D.Impulse);
-            }
-
-            
-        }
         //Anti Softlock                         NEEDS FIX !!!!!!
         if (collision.gameObject.CompareTag("Enemy"))
         {

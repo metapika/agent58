@@ -6,8 +6,8 @@ public class BounceUp : MonoBehaviour
 {
     private PlayerController player;
     public float duration = 5;
-    public float newBounciness = 3000;
-    private float oldBounciness;
+    public float newJumpForce = 3000;
+    private float oldJumpForce;
     
     void Start()
     {
@@ -16,8 +16,8 @@ public class BounceUp : MonoBehaviour
         StartCoroutine(PowerupCountdownRoutine());
 
         //Bounce Powerup
-        oldBounciness = player.bounciness;
-        player.bounciness = newBounciness;
+        oldJumpForce = player.jumpForce;
+        player.jumpForce = newJumpForce;
     }
 
     IEnumerator PowerupCountdownRoutine()
@@ -26,7 +26,7 @@ public class BounceUp : MonoBehaviour
         {
             yield return new WaitForSeconds(duration);
             player.glasses.color = new Color(90.0f / 255.0f, 253.0f / 255.0f, 255.0f / 255.0f);
-            player.bounciness = oldBounciness;
+            player.jumpForce = oldJumpForce;
             Destroy(GetComponent<BounceUp>());
         }
     }

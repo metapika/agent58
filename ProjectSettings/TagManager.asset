@@ -4,8 +4,6 @@
 TagManager:
   serializedVersion: 2
   tags:
-  - BouncyGround
-  - Wall
   - DoubleJumpPowerup
   - KnockbackPowerup
   - Enemy
@@ -13,6 +11,7 @@ TagManager:
   - Death
   - HealPowerup
   - BouncePowerup
+  - Ground
   layers:
   - Default
   - TransparentFX

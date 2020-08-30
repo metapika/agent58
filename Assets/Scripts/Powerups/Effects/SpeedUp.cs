@@ -6,7 +6,7 @@ public class SpeedUp : MonoBehaviour
 {
     private PlayerController player;
     public float duration = 5;
-    public float newSpeed = 15000;
+    public float newSpeed = 50;
     private float oldSpeed;
 
     void Start()
@@ -16,8 +16,8 @@ public class SpeedUp : MonoBehaviour
         StartCoroutine(PowerupCountdownRoutine());
 
         //Speed Powerup
-        oldSpeed = player.thrust;
-        player.thrust = newSpeed;
+        oldSpeed = player.moveSpeed;
+        player.moveSpeed = newSpeed;
     }
     IEnumerator PowerupCountdownRoutine()
     {
@@ -25,7 +25,7 @@ public class SpeedUp : MonoBehaviour
         {
             yield return new WaitForSeconds(duration);
             player.glasses.color = new Color(90.0f / 255.0f, 253.0f / 255.0f, 255.0f / 255.0f);
-            player.thrust = oldSpeed;
+            player.moveSpeed = oldSpeed;
             Destroy(GetComponent<SpeedUp>());
         }
     }
