@@ -4,7 +4,6 @@
 TagManager:
   serializedVersion: 2
   tags:
-  - DoubleJumpPowerup
   - KnockbackPowerup
   - Enemy
   - SpeedPowerup
@@ -12,6 +11,9 @@ TagManager:
   - HealPowerup
   - BouncePowerup
   - Ground
+  - NewEnemy
+  - DoubleJumpPowerup
+  - Knife
   layers:
   - Default
   - TransparentFX

@@ -8,22 +8,27 @@ public class PlayerController : MonoBehaviour
     //Public
     public Rigidbody2D rb;
     public SpriteRenderer glasses;
+    public float quickTimeDuration = 5;
     //Private
     private GameManager gameManager;
     private HealthBar healthBar;
     private Heal HPS;
+    private GameObject enemy;
     //Health system
     private int maxHealth = 20;
     public int currentHealth;
     //Movement
     public bool canDJump = true;
-    private bool canGrab;
     public float moveSpeed, jumpForce;
     public float bounciness = 1000;
     public Transform wallBouncePoint;
     public Transform groundCheckPoint;
     public LayerMask whatisGround;
+    private bool canGrab, isGrabbing;
+    private float wallJumpTime = .1f, wallJumpCounter;
     public bool isGrounded;
+
+    //QT
 
     void Start()
     {
@@ -36,15 +41,10 @@ public class PlayerController : MonoBehaviour
         gameManager = GameObject.Find("GameManager").GetComponent<GameManager>();
     }
 
-    void Update()
+    void FixedUpdate()
     {
-        //float maxVelocity = 70;
-        //Limit velocity
-        //if (rb.velocity.magnitude > maxVelocity)
-        //{
-           // rb.velocity = rb.velocity.normalized * maxVelocity;
-        //}
-
+        if(wallJumpCounter <= 0)
+        {
         //Set the healthbar to the current health
         if (healthBar.healthint != currentHealth)
         {
@@ -63,7 +63,10 @@ public class PlayerController : MonoBehaviour
         }
 
         //Left-Right movement
-        rb.velocity = new Vector2(Input.GetAxisRaw("Horizontal") * moveSpeed, rb.velocity.y);
+        if(!Input.GetKey(KeyCode.S))
+        {
+            rb.velocity = new Vector2(Input.GetAxisRaw("Horizontal") * moveSpeed, rb.velocity.y);
+        }
 
         //Check if grounded
         isGrounded = Physics2D.OverlapCircle(groundCheckPoint.position, .2f, whatisGround);
@@ -73,12 +76,20 @@ public class PlayerController : MonoBehaviour
         {
             rb.velocity = new Vector2(rb.velocity.x, jumpForce);
         }
+
+        //Bouncy bouncy
+        if(isGrounded)
+        {
+            //rb.velocity = new Vector2(rb.velocity.x, jumpForce);
+        }
+
         //Enable doubleJumping
         if(isGrounded)
         {
             canDJump = true;
         }
-        //flip direction
+        
+        //Flip direction
         if (rb.velocity.x > 0)
         {
             transform.localScale = Vector3.one;
@@ -89,27 +100,38 @@ public class PlayerController : MonoBehaviour
         }
 
         //Walljumping
-        canGrab = Physics2D.OverlapCircle(wallBouncePoint.position, .2f, whatisGround);
 
-        if(canGrab)
-        {
-            if(transform.localScale.x == 1.5f)
+            canGrab = Physics2D.OverlapCircle(wallBouncePoint.position, .2f, whatisGround);
+
+            isGrabbing = false;
+            if(canGrab && !isGrounded)
             {
-                transform.localScale = new Vector3(-1.5f, 1.5f, 1.5f);
-                rb.AddForce(transform.up * bounciness/2 * Time.deltaTime, ForceMode2D.Impulse);
-                rb.AddForce(-transform.right * bounciness/2 * Time.deltaTime, ForceMode2D.Impulse);
+                if((transform.localScale.x == 1f && Input.GetAxisRaw("Horizontal") > 0) || (transform.localScale.x == -1f && Input.GetAxisRaw("Horizontal") < 0))
+                {
+                    isGrabbing = true;
+                }
             }
-            else if (transform.localScale.x == -1.5f)
+
+            if(isGrabbing)
             {
-                transform.localScale = new Vector3(1.5f, 1.5f, 1.5f);
-                rb.AddForce(transform.up * bounciness/2 * Time.deltaTime, ForceMode2D.Impulse);
-                rb.AddForce(transform.right * bounciness/2 * Time.deltaTime, ForceMode2D.Impulse);
+                rb.velocity = Vector2.zero;
+
+                if(Input.GetButtonDown("Jump"))
+                {
+                    wallJumpCounter = wallJumpTime;
+
+                    rb.velocity = new Vector2(-Input.GetAxisRaw("Horizontal") * moveSpeed, jumpForce);
+                    isGrabbing = false;
+                }
             }
+        } else{
+            wallJumpCounter -= Time.deltaTime;
         }
     }
 
     void OnTriggerEnter2D(Collider2D other)
     {
+        
         //DoubleJump Effects
         if (other.CompareTag("DoubleJumpPowerup") && other.gameObject.GetComponent<SpriteRenderer>().enabled == true)
         {
@@ -155,6 +177,7 @@ public class PlayerController : MonoBehaviour
                 other.gameObject.GetComponent<SpriteRenderer>().enabled = false;
             }
         }
+        
         //Die when going out of screen
         if (other.CompareTag("Death"))
         {
@@ -196,5 +219,22 @@ public class PlayerController : MonoBehaviour
         currentHealth += amount;
 
         healthBar.SetHealth(currentHealth);
+    }
+    
+    public void QuickTimeKnife()
+    {
+
+    }
+    public IEnumerator QuickTime()
+    {
+        while (true)
+        {
+            yield return new WaitForSeconds(quickTimeDuration);
+            if(Input.GetKeyDown(KeyCode.F))
+            {
+                Debug.Log("Start of the quick time event");
+                //Destroy(other.gameObject);
+            }
+        }
     }
 }
