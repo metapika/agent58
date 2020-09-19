@@ -11,8 +11,13 @@ public class Qt_Trigger : MonoBehaviour
     public float DelayTimer = 0f;
     public float CountTimer = 2f;
     public string PlayerTag = "Player";
-    public GameObject enemy;
-    public GameObject spoted;
+    private GameObject spoted, question;
+
+    void Start()
+    {
+        spoted = GameObject.Find("spoted");
+        question = GameObject.Find("questionmark");
+    }
 
     void Update()
     {
@@ -21,14 +26,13 @@ public class Qt_Trigger : MonoBehaviour
         {
             if(Input.GetButtonDown("Stab"))
             {
-				Destroy(enemy);
+				Destroy(gameObject);
                 qtResponse = QTResponse.Success;
 				StopCoroutine(StateChange());
+            } else if(qtResponse == QTResponse.Fail)
+            {
+                transform.localScale = new Vector3(-transform.localScale.x, transform.localScale.y, transform.localScale.z);
             }
-        }
-        if(qtResponse == QTResponse.Fail)
-        {
-            transform.localScale = new Vector3(-transform.localScale.x, transform.localScale.y, transform.localScale.z);
         }
     }
     private IEnumerator StateChange()

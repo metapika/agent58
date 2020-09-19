@@ -8,7 +8,14 @@ public class NewEnemy : MonoBehaviour
     private bool gotTouched = false;
     private float turnedCount = 0;
     public GameObject question, spoted;
+    private EnemySight enemySight;
     private Vector3 player;
+    
+    void Start()
+    {
+        enemySight = GetComponent<EnemySight>();
+    }
+
     void OnCollisionEnter2D(Collision2D collision)
     {
         if(turnedCount == 0)
@@ -29,9 +36,11 @@ public class NewEnemy : MonoBehaviour
             if(transform.position.x > player.x)
             {
                 transform.localScale = new Vector3(-1f, 1, 1f);
+                enemySight.playerInSight = true;
             } else if(transform.position.x < player.x)
             {
                 transform.localScale = new Vector3(1f, 1, 1f);
+                enemySight.playerInSight = true;
             }
         }
     }

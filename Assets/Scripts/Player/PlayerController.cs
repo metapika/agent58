@@ -24,10 +24,10 @@ public class PlayerController : MonoBehaviour
     public Transform wallBouncePoint;
     public Transform groundCheckPoint;
     public LayerMask whatisGround;
-    private bool canGrab, isGrabbing;
-    private float wallJumpTime = .1f, wallJumpCounter;
+    public bool isGrabbing;
     public bool isGrounded;
-
+    private GameObject ground;
+    public float wallPoint;
     //QT
 
     void Start()
@@ -39,12 +39,11 @@ public class PlayerController : MonoBehaviour
         healthBar.SetMaxHealth(maxHealth);
         rb = gameObject.GetComponent<Rigidbody2D>();
         gameManager = GameObject.Find("GameManager").GetComponent<GameManager>();
+        ground = GameObject.Find("Ground");
     }
 
     void FixedUpdate()
     {
-        if(wallJumpCounter <= 0)
-        {
         //Set the healthbar to the current health
         if (healthBar.healthint != currentHealth)
         {
@@ -63,10 +62,7 @@ public class PlayerController : MonoBehaviour
         }
 
         //Left-Right movement
-        if(!Input.GetKey(KeyCode.S))
-        {
-            rb.velocity = new Vector2(Input.GetAxisRaw("Horizontal") * moveSpeed, rb.velocity.y);
-        }
+        rb.velocity = new Vector2(Input.GetAxisRaw("Horizontal") * moveSpeed, rb.velocity.y);
 
         //Check if grounded
         isGrounded = Physics2D.OverlapCircle(groundCheckPoint.position, .2f, whatisGround);
@@ -75,12 +71,6 @@ public class PlayerController : MonoBehaviour
         if (Input.GetButtonDown("Jump") && isGrounded)
         {
             rb.velocity = new Vector2(rb.velocity.x, jumpForce);
-        }
-
-        //Bouncy bouncy
-        if(isGrounded)
-        {
-            //rb.velocity = new Vector2(rb.velocity.x, jumpForce);
         }
 
         //Enable doubleJumping
@@ -100,32 +90,30 @@ public class PlayerController : MonoBehaviour
         }
 
         //Walljumping
-
-            canGrab = Physics2D.OverlapCircle(wallBouncePoint.position, .2f, whatisGround);
-
-            isGrabbing = false;
-            if(canGrab && !isGrounded)
+        RaycastHit2D hit = Physics2D.Raycast(transform.position, transform.TransformDirection(new Vector2(wallPoint * transform.localScale.x, Vector2.up.y)), wallPoint, whatisGround);
+        
+        if (hit)
+        {
+            if(hit.collider.gameObject == ground & !isGrounded)
             {
-                if((transform.localScale.x == 1f && Input.GetAxisRaw("Horizontal") > 0) || (transform.localScale.x == -1f && Input.GetAxisRaw("Horizontal") < 0))
+                if ((transform.localScale.x == 1f && Input.GetAxisRaw("Horizontal") > 0) || (transform.localScale.x == -1f && Input.GetAxisRaw("Horizontal") < 0))
                 {
                     isGrabbing = true;
                 }
             }
-
-            if(isGrabbing)
+        }
+        else
+        {
+            isGrabbing = false;
+        }
+        if (isGrabbing)
+        {
+            if (Input.GetButtonDown("Jump"))
             {
-                rb.velocity = Vector2.zero;
-
-                if(Input.GetButtonDown("Jump"))
-                {
-                    wallJumpCounter = wallJumpTime;
-
-                    rb.velocity = new Vector2(-Input.GetAxisRaw("Horizontal") * moveSpeed, jumpForce);
-                    isGrabbing = false;
-                }
+                rb.velocity = new Vector2(-Input.GetAxisRaw("Horizontal") * moveSpeed*5, jumpForce);
+                transform.localScale = new Vector3(-Input.GetAxisRaw("Horizontal"), 0, 0);
+                isGrabbing = false;
             }
-        } else{
-            wallJumpCounter -= Time.deltaTime;
         }
     }
 
@@ -190,12 +178,6 @@ public class PlayerController : MonoBehaviour
     {
         //Parameters
         Vector3 playerPosition = transform.position;
-
-        //Damage from enemies
-        if (collision.gameObject.GetComponent<EnemyRotate>())
-        {
-            //TakeDamage(5);
-        }
 
         //Anti Softlock                         NEEDS FIX !!!!!!
         if (collision.gameObject.CompareTag("Enemy"))

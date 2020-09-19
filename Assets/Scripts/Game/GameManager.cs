@@ -7,22 +7,24 @@ using UnityEngine.UI;
 
 public class GameManager : MonoBehaviour
 {
-    public TextMeshProUGUI gameOverText;
-    public TextMeshProUGUI waveText;
     public GameObject healthBar;
+    public GameObject gameOverScreen;
     public bool isGameActive;
+    private PauseMenu canvas;
 
     void Start()
     {
         //Game is active
         isGameActive = true;
+        canvas = GameObject.Find("Canvas").GetComponent<PauseMenu>();
     }
 
     public void GameOver()
     {
+        Time.timeScale = 0f;
         isGameActive = false;
-        gameOverText.gameObject.SetActive(true);
-        waveText.gameObject.SetActive(false);
+        gameOverScreen.SetActive(true);
         healthBar.gameObject.SetActive(false);
+        canvas.enabled = false;
     }
 }
